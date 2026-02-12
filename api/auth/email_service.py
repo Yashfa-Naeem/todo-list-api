@@ -11,10 +11,11 @@ SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
 SMTP_USERNAME = os.getenv("SMTP_USERNAME")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 FROM_EMAIL = os.getenv("FROM_EMAIL")
+BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
 
 def send_verification_email(to_email: str, verification_token: str):
-    verification_link = f"http://localhost:8000/api/auth/verify-email?token={verification_token}"
-    
+    verification_link = f"{BASE_URL}/api/auth/verify-email?token={verification_token}"
+
     message = MIMEMultipart("alternative")
     message["Subject"] = "Verify your email - Todo App"
     message["From"] = FROM_EMAIL
