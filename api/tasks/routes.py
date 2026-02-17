@@ -6,6 +6,10 @@ from ..auth.utils import get_current_user
 from ..database.schema import User
 from . import services
 from typing import List
+from fastapi.responses import FileResponse
+from fastapi import File, UploadFile
+from ..models.models import AttachmentResponse
+
 
 router = APIRouter(prefix="/api/tasks", tags=["Tasks"])
 
@@ -49,10 +53,7 @@ def delete_task(
 ):
     return services.delete_task(db, task_id, current_user.id)
 
-from fastapi.responses import FileResponse
-from fastapi import File, UploadFile
-from ..models.models import AttachmentResponse
-from typing import List
+
 
 @router.post("/{task_id}/attachments", response_model=AttachmentResponse, status_code=201)
 def attach_file(
