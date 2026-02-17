@@ -31,6 +31,7 @@ class Task(Base):
     
     owner = relationship("User", back_populates="tasks") 
     attachments = relationship("TaskAttachment", back_populates="task", cascade="all, delete-orphan")
+    
 class TaskAttachment(Base):
     __tablename__ = "task_attachments"
     
