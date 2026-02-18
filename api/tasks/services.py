@@ -141,3 +141,35 @@ def download_file(db: Session, task_id: int, attachment_id: int, user_id: int):
         )
     
     return attachment
+
+def get_similar_tasks(db: Session, task_id: int, user_id: int):
+    # Get the target task
+    target_task = get_task_by_id(db, task_id, user_id)
+    
+    # Get all tasks for this user (except the target task)
+    all_tasks = db.query(Task).filter(
+        Task.user_id == user_id,
+        Task.id != task_id
+    ).all()
+    
+    # Extract words from target task (title + description)
+    target_text = f"{target_task.title} {target_task.description or ''}".lower()
+    target_words = set(target_text.split())
+    
+    similar_tasks = []
+    
+    for task in all_tasks:
+        # Extract words from current task
+        task_text = f"{task.title} {task.description or ''}".lower()
+        task_words = set(task_text.split())
+        
+        # Check if all words from target exist in current task
+        if target_words.issubset(task_words):
+            similar_tasks.append(task)
+            continue
+        
+        # Check if all words from current task exist in target
+        if task_words.issubset(target_words):
+            similar_tasks.append(task)
+    
+    return similar_tasks
