@@ -6,8 +6,7 @@ from datetime import datetime, timezone
 def get_task_counts(db: Session, user_id: int):
     total = db.query(Task).filter(Task.user_id == user_id).count()
     completed = db.query(Task).filter(
-        Task.user_id == user_id,
-        Task.is_completed == True
+        Task.user_id == user_id,        Task.is_completed == True
     ).count()
     remaining = total - completed
     
