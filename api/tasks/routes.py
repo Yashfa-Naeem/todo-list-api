@@ -84,3 +84,11 @@ def download_file(
         filename=attachment.file_name,
         media_type="application/octet-stream"
     )
+
+@router.get("/{task_id}/similar", response_model=List[TaskResponse])
+def get_similar_tasks(
+    task_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    return services.get_similar_tasks(db, task_id, current_user.id)
