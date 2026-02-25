@@ -9,6 +9,8 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from ..database.database import get_db
 from ..database.schema import User
+from email.mime.text import MIMEText  
+from email.mime.multipart import MIMEMultipart 
 
 load_dotenv()
 
@@ -67,3 +69,50 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         raise credentials_exception
     
     return user
+
+def generate_reset_token():
+    return secrets.token_urlsafe(32)
+
+def send_password_reset_email(to_email: str, reset_token: str):
+    from .email_service import send_verification_email
+    import os
+    
+    BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
+    reset_link = f"{BASE_URL}/api/auth/reset-password?token={reset_token}"
+    
+    message = MIMEMultipart("alternative")
+    message["Subject"] = "Reset Your Password - Todo App"
+    message["From"] = os.getenv("FROM_EMAIL")
+    message["To"] = to_email
+    
+    html = f"""
+    <html>
+      <body>
+        <h2>Password Reset Request</h2>
+        <p>Click the link below to reset your password:</p>
+        <a href="{reset_link}">Reset Password</a>
+        <p>Or copy this link: {reset_link}</p>
+        <p>This link will expire in 1 hour.</p>
+        <p>If you didn't request this, please ignore this email.</p>
+      </body>
+    </html>
+    """
+    
+    part = MIMEText(html, "html")
+    message.attach(part)
+    
+    try:
+        import smtplib
+        SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+        SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
+        SMTP_USERNAME = os.getenv("SMTP_USERNAME")
+        SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+        
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.starttls()
+            server.login(SMTP_USERNAME, SMTP_PASSWORD)
+            server.sendmail(os.getenv("FROM_EMAIL"), to_email, message.as_string())
+        return True
+    except Exception as e:
+        print(f"Error sending email: {e}")
+        return False
