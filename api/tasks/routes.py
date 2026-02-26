@@ -79,8 +79,19 @@ def download_file(
     current_user: User = Depends(get_current_user)
 ):
     attachment = services.download_file(db, task_id, attachment_id, current_user.id)
+    
+    # Create user-specific filename
+    original_name = attachment.file_name
+    name_parts = original_name.rsplit('.', 1)  # Split name and extension
+    
+    if len(name_parts) == 2:
+        name, extension = name_parts
+        new_filename = f"user_{current_user.id}_{name}.{extension}"
+    else:
+        new_filename = f"user_{current_user.id}_{original_name}"
+    
     return FileResponse(
         path=attachment.file_path,
-        filename=attachment.file_name,
+        filename=new_filename,  # ← Changed this
         media_type="application/octet-stream"
     )
