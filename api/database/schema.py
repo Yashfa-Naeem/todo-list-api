@@ -46,6 +46,7 @@ class TaskAttachment(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     task = relationship("Task", back_populates="attachments")
+    user = relationship("User")
     
     
 
