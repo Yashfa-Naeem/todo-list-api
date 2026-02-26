@@ -92,6 +92,6 @@ def download_file(
     
     return FileResponse(
         path=attachment.file_path,
-        filename=new_filename,  # ← Changed this
+        filename=new_filename,  
         media_type="application/octet-stream"
     )
