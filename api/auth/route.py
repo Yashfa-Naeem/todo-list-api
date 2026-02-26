@@ -6,9 +6,9 @@ from ..models.models import UserCreate, UserLogin, Token, UserResponse
 from .utils import get_password_hash, verify_password, create_access_token, generate_verification_token
 from .email_service import send_verification_email
 from datetime import timedelta
-from ..models.models import ForgotPasswordRequest, ResetPasswordRequest
-from .utils import generate_reset_token, send_password_reset_email
-from datetime import timedelta, datetime, timezone
+from datetime import timedelta, datetime
+from ..models.models import UserCreate, UserLogin, Token, UserResponse, ForgotPasswordRequest, ResetPasswordRequest
+from .utils import get_password_hash, verify_password, create_access_token, generate_verification_token, generate_reset_token, send_password_reset_email
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
@@ -86,8 +86,8 @@ def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db
         return {"message": "If email exists, password reset link has been sent"}
     
     reset_token = generate_reset_token()
-    user.reset_password_token = reset_token
-    user.reset_password_expires = datetime.now(timezone.utc) + timedelta(hours=1)
+    user.reset_token = reset_token
+    user.reset_token_expires = datetime.utcnow() + timedelta(hours=1)
     
     db.commit()
     
@@ -97,7 +97,7 @@ def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db
 
 @router.post("/reset-password")
 def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.reset_password_token == request.token).first()
+    user = db.query(User).filter(User.reset_token == request.token).first()
     
     if not user:
         raise HTTPException(
@@ -105,17 +105,15 @@ def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db))
             detail="Invalid or expired reset token"
         )
     
-
-    
-    if user.reset_password_expires < datetime.now(timezone.utc):
+    if user.reset_token_expires < datetime.utcnow():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Reset token has expired"
         )
     
     user.hashed_password = get_password_hash(request.new_password)
-    user.reset_password_token = None
-    user.reset_password_expires = None
+    user.reset_token = None
+    user.reset_token_expires = None
     
     db.commit()
     
