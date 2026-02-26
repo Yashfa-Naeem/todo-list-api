@@ -8,7 +8,7 @@ from .email_service import send_verification_email
 from datetime import timedelta
 from ..models.models import ForgotPasswordRequest, ResetPasswordRequest
 from .utils import generate_reset_token, send_password_reset_email
-from datetime import timedelta, datetime ,timezone
+from datetime import timedelta, datetime, timezone
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
@@ -87,7 +87,7 @@ def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db
     
     reset_token = generate_reset_token()
     user.reset_password_token = reset_token
-    user.reset_password_expires = datetime.utcnow() + timedelta(hours=1)
+    user.reset_password_expires = datetime.now(timezone.utc) + timedelta(hours=1)
     
     db.commit()
     
@@ -104,6 +104,8 @@ def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db))
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid or expired reset token"
         )
+    
+
     
     if user.reset_password_expires < datetime.now(timezone.utc):
         raise HTTPException(
