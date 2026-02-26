@@ -12,6 +12,9 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     is_verified = Column(Boolean, default=False)
     verification_token = Column(String, nullable=True)
+    reset_password_token = Column(String, nullable=True)
+    reset_password_expires = Column(DateTime(timezone=True), nullable=True)
+    refresh_token = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
