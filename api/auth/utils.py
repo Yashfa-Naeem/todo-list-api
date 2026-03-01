@@ -11,6 +11,8 @@ from ..database.database import get_db
 from ..database.schema import User
 from email.mime.text import MIMEText  
 from email.mime.multipart import MIMEMultipart 
+from authlib.integrations.starlette_client import OAuth
+from starlette.config import Config
 
 load_dotenv()
 
@@ -116,3 +118,28 @@ def send_password_reset_email(to_email: str, reset_token: str):
     except Exception as e:
         print(f"Error sending email: {e}")
         return False
+    
+    from authlib.integrations.starlette_client import OAuth
+from starlette.config import Config
+
+# OAuth Configuration
+config = Config(environ=os.environ)
+oauth = OAuth(config)
+
+oauth.register(
+    name='google',
+    client_id=os.getenv('GOOGLE_CLIENT_ID'),
+    client_secret=os.getenv('GOOGLE_CLIENT_SECRET'),
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+    client_kwargs={
+        'scope': 'openid email profile'
+    }
+)
+
+def get_google_user_info(token):
+    """Extract user info from Google token"""
+    return {
+        'email': token.get('email'),
+        'name': token.get('name'),
+        'google_id': token.get('sub')
+    }
