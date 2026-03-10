@@ -4,6 +4,7 @@ from api.auth.route import router as auth_router
 from api.tasks.routes import router as task_router
 from api.reports.routes import router as reports_router
 from api.database.database import engine, Base
+from api.middleware.logging_middleware import LoggingMiddleware
 import os
 from dotenv import load_dotenv
 
@@ -12,6 +13,9 @@ load_dotenv()
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Todo List API", version="1.0.0")
+
+# Add logging middleware FIRST
+app.add_middleware(LoggingMiddleware)
 
 # Add session middleware for OAuth
 app.add_middleware(
