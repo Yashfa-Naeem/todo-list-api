@@ -57,7 +57,6 @@ class AttachmentResponse(BaseModel):
     id: int
     task_id: int
     user_id: int
-    user_email: str
     file_name: str
     file_path: str
     created_at: datetime
