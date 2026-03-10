@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
-from ..database.schema import Task
+from ..database.schema import Task, User
 from ..models.models import TaskCreate, TaskUpdate
 from datetime import datetime
 
@@ -83,11 +83,11 @@ def attach_file(db: Session, task_id: int, user_id: int, file: UploadFile):
     # First check if task exists and belongs to user
     task = get_task_by_id(db, task_id, user_id)
     
-    # Create folder for this user if it doesn't exist
-    upload_dir = f"uploads/{user_id}"
+    # Create nested folder structure: uploads/{user_id}/{task_id}
+    upload_dir = f"uploads/{user_id}/{task_id}"
     os.makedirs(upload_dir, exist_ok=True)
     
-    # Save file to uploads folder
+    # Save file to nested uploads folder
     file_path = f"{upload_dir}/{file.filename}"
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
@@ -103,17 +103,43 @@ def attach_file(db: Session, task_id: int, user_id: int, file: UploadFile):
     db.add(new_attachment)
     db.commit()
     db.refresh(new_attachment)
-    return new_attachment
+    
+    # Get user email and return enriched response
+    user = db.query(User).filter(User.id == user_id).first()
+    return {
+        "id": new_attachment.id,
+        "task_id": new_attachment.task_id,
+        "user_id": new_attachment.user_id,
+        "user_email": user.email if user else "Unknown",
+        "file_name": new_attachment.file_name,
+        "file_path": new_attachment.file_path,
+        "created_at": new_attachment.created_at
+    }
 
 def get_attachments(db: Session, task_id: int, user_id: int):
     # First check if task exists and belongs to user
     get_task_by_id(db, task_id, user_id)
     
-    # Get all attachments for this task
-    return db.query(TaskAttachment).filter(
+    # Get all attachments for this task with user data
+    attachments = db.query(TaskAttachment).filter(
         TaskAttachment.task_id == task_id,
         TaskAttachment.user_id == user_id
     ).all()
+    
+    # Enrich attachments with user email
+    enriched = []
+    for attachment in attachments:
+        user = db.query(User).filter(User.id == attachment.user_id).first()
+        enriched.append({
+            "id": attachment.id,
+            "task_id": attachment.task_id,
+            "user_id": attachment.user_id,
+            "user_email": user.email if user else "Unknown",
+            "file_name": attachment.file_name,
+            "file_path": attachment.file_path,
+            "created_at": attachment.created_at
+        })
+    return enriched
 
 def download_file(db: Session, task_id: int, attachment_id: int, user_id: int):
     # First check if task exists and belongs to user
